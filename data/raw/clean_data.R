@@ -17,6 +17,7 @@ sheets <- excel_sheets(import)
 cores <- read_excel(import, sheet="Cores")
 inc <- read_excel(import, sheet="Incubations")
 hobo <- read_excel(import, sheet="HOBO")
+adults = read_excel(import, sheet="Adults Check")
 
 # convert to dataes dates
 inc <- inc %>% mutate(sampledate = as.Date(sampledate))
@@ -109,7 +110,6 @@ hobo_summary %>% as.data.frame %>% head(24)
 # divide by time interval
 # divide midge_treat by cross_section_area to convert to #/cm^2
 # multiply midge_treat by 10000 to convert to #/m^2
-# z-core midges
 
 inc_proc <- cores %>%
   select(-comments) %>%
@@ -135,3 +135,52 @@ met_long <- met_wide %>%
 
 # export
 # met_long %>% write_csv("data/clean/met_long.csv")
+
+
+
+
+
+#==========
+#========== Adults
+#==========
+
+# combine core and incubation information
+adults = 
+  cores %>%
+  select(-comments) %>%
+  left_join(adults) %>%
+  # clean up variables
+  # divide midge_treat by cross_section_area to convert to #/cm^2
+  # multiply midge_treat by 10000 to convert to #/m^2
+  mutate(
+    sampledate = as.Date(sampledate),
+    site = factor(site),
+    midge_density = round(10000*midge_treat/cross_section_area)
+  ) %>%
+  # group by core sort
+  group_by(core) %>%
+  arrange(core, sampledate) %>%
+  mutate(
+    # calculate cummulative emergence on a given date
+    cumem = cumsum(adults),
+    
+    # calculate porportion of midges emerged on a given date
+    prop = ifelse(midge_treat > 0, cumem/midge_treat,NA),
+    
+    # calculate number of days in sampling period
+    days = c(1, diff(sampledate)),
+    
+    # calculate rate at which adults emerged
+    adults_rate = adults/days
+  ) %>%
+  ungroup()
+
+# export
+# adults %>% write_csv("data/clean/adults.csv")
+
+
+
+
+
+
+
