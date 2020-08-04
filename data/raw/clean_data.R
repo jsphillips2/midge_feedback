@@ -32,6 +32,9 @@ hobo <- hobo %>% mutate(sampledate = as.Date(sampledate))
 #========== HOBO: Light and Temperature
 #==========
 
+# export csv
+# write_csv(hobo, "data/clean/hobo.csv")
+
 # extract incubation interval
 inc_int <- cores %>%
   select(-comments) %>%
@@ -44,7 +47,7 @@ inc_int <- cores %>%
 
 # expand hobo data by light and dark (necessary for mathcing incubations)
 hobo_shade <- hobo %>%
-  expand(nesting(rack, sampledate, sampletime, temperature, light_intensity),
+  tidyr::expand(nesting(rack, sampledate, sampletime, temperature, light_intensity),
          shade = c("light","dark")) 
 
 # join hobo_shade and inc_int, selecting data with matching dates 
