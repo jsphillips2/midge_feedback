@@ -39,3 +39,4 @@ rsconnect/
 # additional
 *.xlsx
 .DS_Store
+*.pdf
