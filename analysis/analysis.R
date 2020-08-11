@@ -41,7 +41,7 @@ theme_set(theme_bw() %+replace%
                   axis.ticks = element_line(size = 0.25)))
 
 # define site colors
-site_colors <- c("dodgerblue","firebrick","gray40")
+site_colors <- c("dodgerblue","firebrick","gray35")
 names(site_colors) <- c("E2","E3","E5")
 
 
@@ -140,7 +140,8 @@ gpp_nd$se <- gpp_preds[,2]
 
 # plot
 p_gpp <- gpp_nd %>%
-  mutate(trial = factor(trial, levels = c(0,1), labels = c("Day 7", "Day 20"))) %>%
+  mutate(trial = factor(trial, levels = c(0,1), labels = c("Day 5 or 6", 
+                                                           "Day 16 or 18"))) %>%
   ggplot(aes(midge_density/1000, pred, color = site))+
   facet_wrap(~trial, nrow = 1)+
   geom_line(aes(y = pred),
@@ -149,7 +150,8 @@ p_gpp <- gpp_nd %>%
                 linetype = 0,
                 alpha = 0.1)+
   geom_jitter(data = gpp_dat%>%
-               mutate(trial = factor(trial, levels = c(0,1), labels = c("Day 7", "Day 20"))),
+               mutate(trial = factor(trial, levels = c(0,1), labels = c("Day 5 or 6", 
+                                                                        "Day 16 or 18"))),
              aes(y = met_z, fill = site),
              shape = 21,
              size = 1.5,
@@ -189,12 +191,17 @@ p_gpp
 #==========
 
 # select final data of adults
-adults_0 <- adults  %>%
+adults_0_a <- adults  %>%
   mutate(duration = as.numeric(max(sampledate) - min(sampledate)))%>%
-  filter(sampledate == max(sampledate)) %>%
-  filter(midge_treat >= 50) %>%
+  filter(sampledate == max(sampledate))  %>%
   mutate(Y1 = cumem,
          Y2 = midge_treat - cumem)
+cor.test(adults_0_a$midge_treat, 
+         adults_0_a$cumem,
+         method = "spearman")
+
+adults_0 <- adults_0_a %>%
+  filter(midge_treat >= 50)
 
 adults_m <- glmer(cbind(Y1, Y2) ~ midge_z*site + (1|rack/core),
                   data = adults_0, family = "binomial")
@@ -212,6 +219,23 @@ Anova(update(adults_m, .~.-midge_z:site))
 #   write_csv("analysis/boot/adults_m_boot.csv")
 # adults_m_boot_ii %>%
 #   write_csv("analysis/boot/adults_m_boot_ii.csv")
+
+adults_m_boot_in <- read_csv("analysis/boot/adults_m_boot.csv")
+adults_m_boot_ii_in <- read_csv("analysis/boot/adults_m_boot_ii.csv")
+
+adults_m_anova <- tibble(Term = factor(adults_m_boot_in$term,
+                     levels = c("midge_z",
+                                "site",
+                                "midge_z:site"),
+                     labels = c("density",
+                                "site",
+                                "density x site")),
+       `X_iii` = round(adults_m_boot_in$chi, 1),
+       `P_iii` = round(adults_m_boot_in$p, 3),
+       `X_ii` = c(round(adults_m_boot_ii_in$chi, 1), ""),
+       `P_ii` = c(round(adults_m_boot_ii_in$p, 3), ""))
+
+adults_m_anova %>% knitr::kable(format = "latex")
 
 # random effects
 summary(adults_m)$varcor
@@ -377,16 +401,18 @@ gpp_null_sum$se <- gpp_null_pred[,2]
 p_feed <- gpp_mod_sum %>%
   ggplot(aes(midge_density/1000, pred, color = site))+
   facet_wrap(~site, nrow = 1)+
-  # geom_ribbon(aes(ymin = pred - se, ymax = pred + se,fill = site),
-  #             alpha = 0.15, linetype = 0)+
   geom_line(aes(y = pred), 
             size = 0.6)+
   geom_line(data = gpp_null_sum,  aes(y = pred), 
             size = 0.6, linetype = 2)+
-  # geom_ribbon(data = gpp_null_sum,
-  #             aes(ymin = pred - se, ymax = pred + se, fill = site),
-  #             alpha = 0.1, 
-  #             linetype = 0)+
+  geom_text(inherit.aes = F,
+            data = tibble(site = "E3",
+                          x = c(75, 85),
+                          y = c(0.135, 0.3),
+                          label = c("no midge effect",
+                                    "with midge effect")),
+            aes(x = x, y = y, label = label),
+            size = 2.5)+
   scale_color_manual("", values=site_colors)+
   scale_fill_manual(guide = F, "", values=site_colors)+
   scale_y_continuous("Proportion emerged",
@@ -443,14 +469,17 @@ hobo_prep <- hobo %>%
   summarize(temp = mean(temperature),
             par = mean(light_intensity/54)) %>%
   mutate(yday = yday(sampledate),
-         day = yday - min(yday))
+         day = yday - min(yday)) %>%
+  ungroup()
 
 # map
 sites <- tibble(lat = c(7278009, 7276128, 7276396 - 100),
                 long = c(0406276, 0407635, 0409775),
                 site = c("E2","E3","E5"))
-anchor = c(0403100, 7281500)
-names(anchor) = c("x","y")
+anchor_scale = c(0403100, 7281500)
+anchor_north = c(0405500, 7281000)
+names(anchor_scale) = c("x","y")
+names(anchor_north) = c("x","y")
 p_a <- myv_df %>%
   ggplot(aes(long,lat))+
   geom_polygon(aes(fill = piece), size = 0.3, color = "black")+
@@ -463,11 +492,13 @@ p_a <- myv_df %>%
             aes(x = long, y = lat, label = site, color = site),
             size = 4)+
   scale_color_manual("",values = site_colors, guide = F)+
-  scale_fill_manual("",values = c("gray90",rep("white", 18)), guide = F)+
+  scale_fill_manual("",values = c("gray95",rep("white", 18)), guide = F)+
   scalebar(myv_df, dist = 2, dist_unit = "km",st.bottom = F,
            location = "topleft",st.size = 2.5, st.dist = 0.03,
-           border.size = 0.2,anchor = anchor,
-           transform = F, model = "WGS84")
+           border.size = 0.2,anchor = anchor_scale,
+           transform = F, model = "WGS84")+
+  north(myv_df,symbol = 3,
+        anchor = anchor_north)
 p_a
 
 par_u <- mean(hobo_prep$par)
@@ -477,6 +508,9 @@ temp_s <- sd(hobo_prep$temp)
 x <- (c(0, 50, 100, 150) - par_u ) / par_s
 
 c <- 1
+
+
+hobo_prep %>% filter(yday %in% c(190, 198)) %>% select(yday, sampledate) %>% unique
 
 p_b <- hobo_prep %>%
   mutate(par = (par - par_u) / par_s,
@@ -495,7 +529,8 @@ p_b <- hobo_prep %>%
                                          breaks = c(11, 12, 13, 14)))+
   scale_x_continuous("Day of year",
                      limits = c(187, 201),
-                     breaks = c(188, 194, 200))+
+                     breaks = c(190, 198),
+                     labels = c("9 July", "17 July"))+
   theme(strip.text = element_blank(),
         legend.position = c(0.5, 1),
         legend.direction = "horizontal",
