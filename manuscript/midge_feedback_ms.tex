@@ -194,39 +194,73 @@ for assistance with fieldwork.
 % ---------------------------------------------------------------------------------------
 
 \begin{table}
-\caption{\label{tab:gpp}
-ANOVA for mesocosm GPP. \emph{P}-values are from \emph{F}-tests with
-Kenward-Roger denominator degrees of freedom.}
+\caption{\label{tab:adult}
+LMM for mesocosm GPP. 
+\emph{P}-values are from \emph{F}-tests with the Kenward-Roger correction.
+The model included random effects for block ($\upsigma$ = 0.001)
+and mesocosm identity ($\upsigma$ = 0.013), 
+with residual standard deviation $\upsigma$ = 0.012.}
 \setlength{\tabcolsep}{12pt}
 \begin{tabular}{lllllll}
 \toprule
 & & \multicolumn{2}{c}{Type III} & & \multicolumn{2}{c}{Type II} \\
 \cmidrule{3-4} \cmidrule{6-7}
-Term & & \emph{F}_{ndf,ddf} & \emph{P} & & \emph{F}_{ndf,ddf} & \emph{P}\\
+Term & & \emph{F}_{(ndf,ddf)} & \emph{P} & & \emph{F}_{(ndf,ddf)} & \emph{P}\\
 \midrule
-temperature & & 31_{1,41.2} & <0.001 & & 31_{1,41.2} & <0.001\\
+temperature & & 31_{(1,41.2)} & <0.001 & & 31_{(1,41.2)} & <0.001\\
 
-PAR & & 0.001_{1,38.9} & 0.981 & & 0.001_{1,38.9} & 0.981\\
+PAR & & 0.001_{(1,38.9)} & 0.981 & & 0.001_{(1,38.9)} & 0.981\\
 
-day & & 0.35_{1,41.3} & 0.555 & & 79_{1,41.3} & <0.001\\
+period & & 0.35_{(1,41.3)} & 0.555 & & 79_{(1,41.3)} & <0.001\\
 
-site & & 0.15_{2,4.63} & 0.861 & & 4_{2,2.62} & 0.161\\
+site & & 0.15_{(2,4.63)} & 0.861 & & 4_{(2,2.62)} & 0.161\\
 
-density & & 12_{1,37.8} & 0.002 & & 13_{1,37} & <0.001\\
+density & & 12_{(1,37.8)} & 0.002 & & 13_{(1,37)} & <0.001\\
 
-density^2 & & 5.6_{1,37.4} & 0.023 & &  & \\
+density^2 & & 5.6_{(1,37.4)} & 0.023 & &  & \\
 
-density^3  & & 4.6_{1,37.1} & 0.039 & & & \\
+density^3  & & 4.6_{(1,37.1)} & 0.039 & & & \\
 
-day $\times$ site & & 10_{2,41} & <0.001 & & & \\
+period $\times$ site & & 10_{(2,41)} & <0.001 & & & \\
 
-day $\times$ density & & 16_{1,39.4} & <0.001 & & & \\
+period $\times$ density & & 16_{(1,39.4)} & <0.001 & & & \\
 
-site $\times$ density & & 4.4_{2,36.6} & 0.020 & & & \\
+site $\times$ density & & 4.4_{(2,36.6)} & 0.020 & & & \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+
+\clearpage
+
+
+
+% ---------------------------------------------------------------------------------------
+% Table II
+% ---------------------------------------------------------------------------------------
+
+\begin{table}
+\caption{\label{tab:gpp}
+GLMM for adult emergence rate, as a proportion of the initial number of individuals.
+\emph{P}-values are from a bootstrapped likelihood-ratio test, 
+calculated from 2000 simulated data sets.
+The model included random effects for block ($\upsigma$ = 0.03)
+and mesocosm identity ($\upsigma$ = 0.26).}
+\setlength{\tabcolsep}{12pt}
+\begin{tabular}{lllllll}
+\toprule
+& & \multicolumn{2}{c}{Type III} & & \multicolumn{2}{c}{Type II} \\
+\cmidrule{3-4} \cmidrule{6-7}
+Term & & \chi^2_{(df)} & \emph{P} & & \chi^2_{(df)} & \emph{P}\\
+\midrule
+density & & 0.0_{(1)} & 0.288 & & 31.9_{(1)} & <0.001\\
+
+site & & 4.7_{(2)} & 0.217 & & 2.1_{(2)} & 0.422\\
+
+density $\times$ site & & 4.5_{(2)} & 0.147 & & & \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \clearpage
 
@@ -240,6 +274,11 @@ site $\times$ density & & 4.4_{2,36.6} & 0.020 & & & \\
 \centering
 \includegraphics{../analysis/figures/p_sites.pdf}
 \caption{\label{fig:sites}
+Experimental sites. 
+(a) The three sites covered a wide range of M\'{y}vatn's south basin.
+Light gray areas indicate water, while white areas indicate land.
+(b) Mean daily PAR and temperature were calculated by averaging half-hourly
+measurements from two loggers deployed on the lake bottom for each site.
 }
 \end{figure}
 
@@ -255,6 +294,15 @@ site $\times$ density & & 4.4_{2,36.6} & 0.020 & & & \\
 \centering
 \includegraphics{../analysis/figures/p_gpp.pdf}
 \caption{\label{fig:gpp}
+GPP as a function of initial larval density.
+The points show the observed data standardized to the mean water temperature
+measured during the incubations.
+The solid lines show fitted values from the third-degree polynomial LMM.
+While the model provides a smooth fit to the data,
+we connected the fitted values at the experimental densities with
+straight lines to draw attention to the data themselves. 
+The shaded regions show the standard errors estimated from the 
+covariance matrix associated with the model fit.
 }
 \end{figure}
 
@@ -270,6 +318,11 @@ site $\times$ density & & 4.4_{2,36.6} & 0.020 & & & \\
 \centering
 \includegraphics{../analysis/figures/p_adults.pdf}
 \caption{\label{fig:adults}
+Adult emergence rate as a function of GPP per initial midge larva.
+The points show the observed data, 
+the line shows teh fitted values from a GLMM,
+and the shaded regions show the standard errors estimated from the 
+covariance matrix associated with the model fit.
 }
 \end{figure}
 
@@ -283,6 +336,14 @@ site $\times$ density & & 4.4_{2,36.6} & 0.020 & & & \\
 \centering
 \includegraphics{../analysis/figures/p_feed.pdf}
 \caption{\label{fig:feed}
+Consequences of midge effects on GPP for negative density-dependence.
+The curves are derived from the conjunction of the LMM in Figure \ref{fig:gpp}
+and the GLMM in Figure \ref{fig:adults}. 
+The solid lines (``with midge effect'') show modeled emergence rates including the modeled
+effect of midges on overall GPP,
+while the dashed lines (``no midge effect'') exclude midge effects on overall GPP.
+The difference between the two lines is a measure of the midge effect on density-dependent
+emergence as mediated by midge effects on GPP. 
 }
 \end{figure}
 
