@@ -185,5 +185,43 @@ adults =
 
 
 
+#==========
+#========== Routine larva
+#==========
 
+# set import path
+routine_import <- "data/raw/master_ltreb_2aug2020.xlsx"
 
+# examine sheets
+routine_sheets <- excel_sheets(routine_import)
+
+# extract larva counts
+larv <- read_excel(routine_import, sheet="Chir Counts",
+                   col_types = c("text",
+                                 "text",
+                                 "text",
+                                 "text",
+                                 "text",
+                                 "numeric",
+                                 "numeric",
+                                 "numeric",
+                                 "numeric",
+                                 "numeric",
+                                 "numeric",
+                                 "numeric",
+                                 "numeric",
+                                 "numeric",
+                                 "numeric",
+                                 "text",
+                                 "text"
+                                 ))
+
+larv %>%
+  mutate(sampledate = as_date(sampledate),
+         year = year(sampledate),
+         month = month(sampledate)) %>%
+  filter(year == 2017) %>%
+  mutate(tanyt = tanyt / fract_count / (pi * 0.025^2)) %>%
+  group_by(sta) %>%
+  summarize(sd = sd(tanyt, na.rm = T)/sqrt(length(na.omit(tanyt))),
+            tanyt = mean(tanyt, na.rm = T))
