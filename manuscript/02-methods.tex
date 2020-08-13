@@ -2,7 +2,6 @@
 
 \section*{Methods}
 
-%========================================================================================
 
 M\'{y}vatn is a large ($37\text{m}^2$), shallow (mean depth: 2.5m), 
 naturally eutrophic lake in northeastern Iceland (65°40’N 17°00’W) \citep{einarsson2004}.
@@ -16,7 +15,7 @@ In sediment cores taken throughout the summer of 2017, E3 had the highest densit
 followed by E5 ($30,648 \pm 11,767$), and then E2 ($431 \pm 172$).
 Maximum densities in M\'{y}vatn have exceeded $200,000~\text{m}^{-2}$ \citep{lindegaard1979}.
 In the summer of 2017, 
-E2 was subject an expanding mat of filamentous green algae 
+E2 was subject an expanding mat of filamentous green algae (Cladophorales) 
 that was largely absent from E3 and E5 (J. Phillips; personal observation).
 Furthermore, E2 was substantially colder during the experiment period than 
 E3 and E5 (Figure \ref{fig:sites}).
@@ -149,7 +148,7 @@ the partitioning of GPP across a greater number of individuals.
 Scenario (1) included this decline in GPP due to partitioning, but also included
 any positive or negative effects of larval density on GPP itself.
 The difference between scenarios (1) and (2) gave a measure of the effect of larval
-density on the strength of density dependence as mediate through midge effects on GPP.
+density on the strength of density dependence as mediated through midge effects on GPP.
 
 Statistical analyses were conducted in R 4.0.0,
 using the ``lme4'' package to fit the LMM and GLMMs.
@@ -158,7 +157,7 @@ the Kenward-Roger correction for the LMM (``Anova'' function in the``car'' packa
 and with parametric-bootstrapped likelihood-ratio tests (LRTs) based on 2000 simulations
 for the GLMMs (``simulate'' function in the native ``stats'' package).
 We used both Type III and Type II tests,
-the balance the concerns with inflated Type-I errors that can occur when dropping 
+to balance concerns with inflated Type-I errors that can occur when dropping 
 terms with the poor statistical inference than can come from overparameterized models.
 
 
