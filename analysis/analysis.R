@@ -326,7 +326,7 @@ p_adults <- adults_gpp_nd %>%
   scale_y_continuous("Proportion emerged",
                      limits = c(0.09, 0.73),
                      breaks = c(0.1 ,0.3, 0.5, 0.7))+
-  scale_x_continuous(expression("mg"~O[2]*~midge^{-1}*""),
+  scale_x_continuous(expression("GPP"*~midge^{-1}*""),
                      limits = c(0.25, 1.75),
                      breaks = c(0.4, 1, 1.6))+
   theme(strip.text = element_blank(),
@@ -397,13 +397,55 @@ gpp_null_sum$pred <- gpp_null_pred[,1]
 gpp_null_sum$se <- gpp_null_pred[,2]
 
 
-# plot
-p_feed <- gpp_mod_sum %>%
+# plot proportion
+p_feed_a <- gpp_mod_sum %>%
   ggplot(aes(midge_density/1000, pred, color = site))+
   facet_wrap(~site, nrow = 1)+
   geom_line(aes(y = pred), 
             size = 0.6)+
   geom_line(data = gpp_null_sum,  aes(y = pred), 
+            size = 0.6, linetype = 2)+
+  geom_text(inherit.aes = F,
+            data = tibble(site = "E3",
+                          x = c(75, 90),
+                          y = c(0.135, 0.3),
+                          label = c("no midge effect",
+                                    "with midge effect")),
+            aes(x = x, y = y, label = label),
+            size = 2.5)+
+  scale_color_manual("", values=site_colors)+
+  scale_y_continuous("Proportion emerged",
+                     limits = c(0.1, 0.4),
+                     breaks = c(0.1, 0.2, 0.3, 0.4))+
+  scale_x_continuous(name = "",
+                     breaks = c(40, 80, 120),
+                     limits = c(25, 130),
+                     labels = NULL)+
+  theme(strip.text = element_blank(),
+        legend.position = c(0.2, 0.93),
+        legend.direction = "horizontal",
+        legend.text = element_text(margin = margin(l = -6)),
+        legend.key.size = unit(0.7, "lines"),
+        legend.spacing.x = unit(0.4, "lines"),
+        panel.border = element_blank(),
+        panel.spacing = unit(0.25, "lines"),
+        axis.line.x = element_line(size = 0.25),
+        axis.line.y = element_line(size = 0.25),
+        plot.margin = margin(1,1,1,1))+
+  guides(color = guide_legend(override.aes = list(size = 0.917 * 0.5, fill = NA)))+
+  coord_capped_cart(left = "both", bottom='both')
+p_feed_a
+
+# plot total
+p_feed_b <- gpp_mod_sum %>%
+  mutate(pred = pred * midge_density / 1000) %>%
+  ggplot(aes(midge_density/1000, pred, color = site))+
+  facet_wrap(~site, nrow = 1)+
+  geom_line(aes(y = pred), 
+            size = 0.6)+
+  geom_line(data = gpp_null_sum %>%
+              mutate(pred = pred * midge_density / 1000),  
+            aes(y = pred), 
             size = 0.6, linetype = 2)+
   geom_text(inherit.aes = F,
             data = tibble(site = "E3",
@@ -413,11 +455,10 @@ p_feed <- gpp_mod_sum %>%
                                     "with midge effect")),
             aes(x = x, y = y, label = label),
             size = 2.5)+
-  scale_color_manual("", values=site_colors)+
-  scale_fill_manual(guide = F, "", values=site_colors)+
-  scale_y_continuous("Proportion emerged",
-                     limits = c(0.1, 0.4),
-                     breaks = c(0.1, 0.2, 0.3, 0.4))+
+  scale_color_manual("", values=site_colors, guide = F)+
+  scale_y_continuous(expression("Total emerged ("*1000~m^{-2}*")"),
+                     limits = c(7.8, 20),
+                     breaks = c(8, 12, 16, 20))+
   scale_x_continuous(expression("Larval density ("*1000~m^{-2}*")"),
                      breaks = c(40, 80, 120),
                      limits = c(25, 130))+
@@ -432,11 +473,27 @@ p_feed <- gpp_mod_sum %>%
         axis.line.x = element_line(size = 0.25),
         axis.line.y = element_line(size = 0.25),
         plot.margin = margin(1,1,1,1))+
-  guides(color = guide_legend(override.aes = list(size = 0.917 * 0.5, fill = NA)))+
   coord_capped_cart(left = "both", bottom='both')
+
+p_feed_b
+
+# combine
+p_feed <- plot_grid(NULL, p_feed_a, NULL, p_feed_b,
+                nrow = 4,
+                rel_heights = c(0.05,1, 0.025, 1),
+                align = "v",
+                labels = c("",
+                           "a",
+                           "",
+                           "b"),
+                label_size = 12,
+                label_fontface = "plain",
+                hjust = c(0, 0, 0, 0),
+                vjust = c(0, 0, 0, -0.75))
+
 p_feed
 # ggsave(file = "analysis/figures/p_feed.pdf",
-#           width = 3.5, height = 2.75)
+#           width = 3.5, height = 4.5)
 
 
 
@@ -512,6 +569,8 @@ c <- 1
 
 hobo_prep %>% filter(yday %in% c(190, 198)) %>% select(yday, sampledate) %>% unique
 
+hobo_prep %>% group_by(site) %>% summarize(temp = mean(temp))
+
 p_b <- hobo_prep %>%
   mutate(par = (par - par_u) / par_s,
          temp = (temp - temp_u) / temp_s + c) %>%
@@ -554,6 +613,7 @@ p_ab <- plot_grid(p_a, NULL,p_b,
                              "",
                              "b"),
                   label_size = 12,
+                  label_fontface = "plain",
                   hjust = c(-0.5, 0, -0.5),
                   vjust = c(2.5,0,-1)
 )
