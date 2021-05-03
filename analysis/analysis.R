@@ -23,6 +23,7 @@ met_long <- read_csv("data/clean/met_long.csv") %>%
          temp_z = (temperature - mean(temperature, na.rm=T))/(2*sd(temperature, na.rm=T)),
          par_z = (par - mean(par, na.rm=T))/(2*sd(par, na.rm=T)),
          date = as.factor(sampledate))
+# note, metabolism data are in g m^-2 h^-1 (get converted below)
 adults <- read_csv("data/clean/adults.csv") %>%
   mutate(midge_z = (midge_treat - mean(midge_treat, na.rm=T))/(2*sd(midge_treat, na.rm=T)))
 
@@ -33,7 +34,7 @@ theme_set(theme_bw() %+replace%
                   plot.margin = margin(1,1,1,1),
                   legend.margin = margin(0,0,0,-4),
                   legend.text = element_text(size = 8),
-                  axis.text = element_text(size = 10, color="black"),
+                  axis.text = element_text(size = 10, color="black", family = "sans"),
                   axis.title = element_text(size =10),
                   axis.title.y = element_text(angle = 90, margin=margin(0,10,0,0)),
                   axis.title.x = element_text(margin = margin(10,0,0,0)),
@@ -123,7 +124,7 @@ coefs
 # standardize observations
 gpp_dat = gpp_dat %>%
   mutate(temp_cor = coefs[which(rownames(coefs)=="temp_z"), 1]*temp_z,
-         met_z = met - temp_cor + mean(temp_cor))
+         met_s = met - temp_cor + mean(temp_cor))
 
 # generate predicted data
 gpp_nd <- gpp_dat %>% 
@@ -152,7 +153,7 @@ p_gpp <- gpp_nd %>%
   geom_jitter(data = gpp_dat%>%
                mutate(trial = factor(trial, levels = c(0,1), labels = c("Day 5 or 6", 
                                                                         "Day 16 or 18"))),
-             aes(y = met_z, fill = site),
+             aes(y = met_s, fill = site),
              shape = 21,
              size = 1.5,
              stroke = 0,
@@ -177,11 +178,9 @@ p_gpp <- gpp_nd %>%
         panel.spacing = unit(1, "lines"),
         axis.line.x = element_line(size = 0.25),
         axis.line.y = element_line(size = 0.25))+
-  guides(color = guide_legend(override.aes = list(size = 0.5, fill = NA)))+
-  coord_capped_cart(left = "both", bottom='both')
+  guides(color = guide_legend(override.aes = list(size = 0.5, fill = NA)))
 p_gpp
-# ggsave(file = "analysis/figures/p_gpp.pdf",
-#           width = 3.5, height = 3)
+
 
 
 
@@ -280,9 +279,11 @@ adults_new <- adults_0 %>%
   full_join(gpp_dat %>%
               filter(midge_treat > 0)%>%
               group_by(core) %>%
-              summarize(met_z = mean(met_z),
+              summarize(met_s = mean(met_s),
                         midge_density = unique(midge_density)) %>%
-              mutate(met_per = 1000 * 24 * 13 * met_z / midge_density,
+              mutate(met_per = 1000 * met_s / midge_density, 
+                     # calculate production per midge
+                     # convert production to mg O2 (x 1000)
                      met_per_z = (met_per - mean(met_per))/sd(met_per)))
 
 # fit_model
@@ -327,22 +328,50 @@ p_adults <- adults_gpp_nd %>%
                      limits = c(0.09, 0.73),
                      breaks = c(0.1 ,0.3, 0.5, 0.7))+
   scale_x_continuous(expression("GPP"*~midge^{-1}*""),
-                     limits = c(0.25, 1.75),
-                     breaks = c(0.4, 1, 1.6))+
+                     limits = c(0.0009, 0.0056),
+                     breaks = c(0.001, 0.003, 0.005))+
   theme(strip.text = element_blank(),
-        legend.position = c(0.2, 0.9),
+        legend.position = c(0.275, 0.925),
         legend.direction = "horizontal",
         legend.text = element_text(margin = margin(l = -6)),
         legend.key.size = unit(0.7, "lines"),
         legend.spacing.x = unit(0.4, "lines"),
         panel.border = element_blank(),
         panel.spacing = unit(1, "lines"),
+        axis.title.y = element_text(margin = margin(r = 13)),
         axis.line.x = element_line(size = 0.25),
-        axis.line.y = element_line(size = 0.25))+
-  coord_capped_cart(left = "both", bottom='both')
+        axis.line.y = element_line(size = 0.25))
 p_adults
-# ggsave(file = "analysis/figures/p_adults.pdf",
-#           width = 3.5, height = 3.5)
+
+
+
+
+
+#==========
+#========== Combine panels
+#==========
+
+p_comb_a <- plot_grid(NULL, p_adults, NULL,
+                    nrow = 1,
+                    rel_widths = c(0.01, 1,0.3))
+
+# combine
+p_comb <- plot_grid(NULL, p_gpp, NULL, NULL, p_comb_a,
+                    nrow = 5,
+                    rel_heights = c(0.05,1,0.15,0.025, 0.9),
+                    # align = "h",
+                    labels = c("",
+                               "a",
+                               "",
+                               "",
+                               "b"),
+                    label_size = 12,
+                    label_fontface = "plain",
+                    hjust = c(0, 0, 0, 0),
+                    vjust = c(0, 0, 0, -0.75))
+p_comb
+# ggsave(plot = p_comb, file = "manuscript/p_comb.pdf", width = 3.5, height = 6)
+
 
 
 
@@ -353,48 +382,58 @@ p_adults
 
 # calculate predicted gpp for observed levels
 gpp_mod <- gpp_dat %>% 
-  filter(midge_treat >= 50) %>%
+  filter(midge_treat >= 50) %>% # take non-zero densities
   tidyr::expand(trial, site, midge_z = seq(min(midge_z), max(midge_z)+0.3, length.out = 100), 
                 temp_z = 0, par_z = 0, rack = 1, coried = 1) %>%
+  # back calculate midge_treat and midge_density from midge_z
   mutate(midge_treat = 2*midge_z*sd(gpp_dat$midge_treat) + mean(gpp_dat$midge_treat),
          midge_density = midge_treat*unique(gpp_dat$midge_density/gpp_dat$midge_treat)) %>%
   na.omit()
+gpp_mod$pred <- predict(gpp_m, newdata = gpp_mod, re.form=NA) # predictions from model fit
 
-gpp_mod$pred <- predict(gpp_m, newdata = gpp_mod, re.form=NA) 
-
+# GPP per midge
 gpp_mod_sum <- gpp_mod %>%
   filter(midge_treat > 0) %>%
   group_by(site, midge_treat, midge_density) %>%
-  summarize(pred = mean(pred))%>%
-  mutate(pred_per = 1000 * 24 * 13 * pred/midge_density,
-         pred_per_z = (pred_per - mean(adults_new$met_per))/sd(adults_new$met_per))
+  summarize(pred = mean(pred)) %>%
+  mutate(pred_per = 1000 * pred/midge_density, 
+         # calculate GPP per midge
+         # convert production to mg O2 (x 1000) 
+         pred_per_z = (pred_per - mean(adults_new$met_per))/sd(adults_new$met_per)) 
+# z-score predictd production per midge using mean and sd from adults_new
 
-gpp_mod_pred <-predictSE.merMod(adults_gpp, newdata = gpp_mod_sum %>%
-                                       mutate(met_per_z = pred_per_z), 
-                                     REForm = NA, print.matrix = T)
-gpp_mod_sum$pred <- gpp_mod_pred[,1]
-gpp_mod_sum$se <- gpp_mod_pred[,2]
+# predicted emergence from GPP per midge using GLMM for adults
+gpp_mod_pred <-predict(adults_gpp, 
+                       newdata = gpp_mod_sum %>% mutate(met_per_z = pred_per_z),
+                       re.form = NA, type = "response")
+gpp_mod_sum$pred <- gpp_mod_pred
 
+
+
+# calculate predicted GPP with midges removed (midge_treat = 0)
 gpp_null <- gpp_dat %>% 
   filter(midge_treat == 0) %>%
   tidyr::expand(trial, site, midge_z, temp_z = 0, par_z = 0, rack = 1, coried = 1)
+gpp_null$pred <- predict(gpp_m, newdata = gpp_null, re.form=NA)  # predictions from model fit
 
-gpp_null$pred <- predict(gpp_m, newdata = gpp_null, re.form=NA) 
-
+# GPP per midge
 gpp_null_sum <- gpp_null %>%
   group_by(site) %>%
   summarize(pred = mean(pred)) %>%
-  tidyr::expand(nesting(site,pred), 
-                midge_density = {gpp_mod %>% filter(midge_treat > 0)}$midge_density+1500) %>%
-  mutate(pred_per = 1000 * 24 * 13 * pred/midge_density,
+  tidyr::expand(nesting(site, pred), 
+                midge_density = gpp_mod_sum$midge_density) %>%
+  mutate(pred_per = 1000 * pred/midge_density,
+         # calculate GPP per midge
+         # convert production to mg O2 (x 1000) produced over 13 days (13 x 24 / day)
          pred_per_z = (pred_per - mean(adults_new$met_per))/sd(adults_new$met_per))
+# z-score predictd production per midge using mean and sd from adults_new
 
-
-gpp_null_pred <-predictSE.merMod(adults_gpp, newdata = gpp_null_sum %>%
-                                  mutate(met_per_z = pred_per_z), 
-                                REForm = NA, print.matrix = T)
-gpp_null_sum$pred <- gpp_null_pred[,1]
-gpp_null_sum$se <- gpp_null_pred[,2]
+# predicted emergence from GPP per midge using GLMM for adults
+gpp_null_pred <-predict(adults_gpp, 
+                        newdata = gpp_null_sum %>% mutate(met_per_z = pred_per_z), 
+                        re.form = NA, 
+                        type = "response")
+gpp_null_sum$pred <- gpp_null_pred
 
 
 # plot proportion
@@ -402,13 +441,13 @@ p_feed_a <- gpp_mod_sum %>%
   ggplot(aes(midge_density/1000, pred, color = site))+
   facet_wrap(~site, nrow = 1)+
   geom_line(aes(y = pred), 
-            size = 0.6)+
+            size = 0.5)+
   geom_line(data = gpp_null_sum,  aes(y = pred), 
-            size = 0.6, linetype = 2)+
+            size = 0.5, linetype = 2)+
   geom_text(inherit.aes = F,
             data = tibble(site = "E3",
-                          x = c(75, 90),
-                          y = c(0.135, 0.3),
+                          x = c(75, 85),
+                          y = c(0.135, 0.32),
                           label = c("no midge effect",
                                     "with midge effect")),
             aes(x = x, y = y, label = label),
@@ -422,18 +461,17 @@ p_feed_a <- gpp_mod_sum %>%
                      limits = c(25, 130),
                      labels = NULL)+
   theme(strip.text = element_blank(),
-        legend.position = c(0.2, 0.93),
+        legend.position = c(0.2, 0.95),
         legend.direction = "horizontal",
         legend.text = element_text(margin = margin(l = -6)),
         legend.key.size = unit(0.7, "lines"),
         legend.spacing.x = unit(0.4, "lines"),
         panel.border = element_blank(),
-        panel.spacing = unit(0.25, "lines"),
+        panel.spacing = unit(0.5, "lines"),
         axis.line.x = element_line(size = 0.25),
         axis.line.y = element_line(size = 0.25),
         plot.margin = margin(1,1,1,1))+
-  guides(color = guide_legend(override.aes = list(size = 0.917 * 0.5, fill = NA)))+
-  coord_capped_cart(left = "both", bottom='both')
+  guides(color = guide_legend(override.aes = list(size = 0.917 * 0.5, fill = NA)))
 p_feed_a
 
 # plot total
@@ -442,11 +480,11 @@ p_feed_b <- gpp_mod_sum %>%
   ggplot(aes(midge_density/1000, pred, color = site))+
   facet_wrap(~site, nrow = 1)+
   geom_line(aes(y = pred), 
-            size = 0.6)+
+            size = 0.5)+
   geom_line(data = gpp_null_sum %>%
               mutate(pred = pred * midge_density / 1000),  
             aes(y = pred), 
-            size = 0.6, linetype = 2)+
+            size = 0.5, linetype = 2)+
   geom_text(inherit.aes = F,
             data = tibble(site = "E3",
                           x = c(75, 85),
@@ -463,17 +501,11 @@ p_feed_b <- gpp_mod_sum %>%
                      breaks = c(40, 80, 120),
                      limits = c(25, 130))+
   theme(strip.text = element_blank(),
-        legend.position = c(0.2, 0.93),
-        legend.direction = "horizontal",
-        legend.text = element_text(margin = margin(l = -6)),
-        legend.key.size = unit(0.7, "lines"),
-        legend.spacing.x = unit(0.4, "lines"),
         panel.border = element_blank(),
-        panel.spacing = unit(0.25, "lines"),
+        panel.spacing = unit(0.5, "lines"),
         axis.line.x = element_line(size = 0.25),
         axis.line.y = element_line(size = 0.25),
-        plot.margin = margin(1,1,1,1))+
-  coord_capped_cart(left = "both", bottom='both')
+        plot.margin = margin(1,1,1,1))
 
 p_feed_b
 
@@ -492,8 +524,7 @@ p_feed <- plot_grid(NULL, p_feed_a, NULL, p_feed_b,
                 vjust = c(0, 0, 0, -0.75))
 
 p_feed
-# ggsave(file = "analysis/figures/p_feed.pdf",
-#           width = 3.5, height = 4.5)
+# ggsave(plot = p_feed, file = "manuscript/p_feed.pdf", width = 3.5, height = 4.5)
 
 
 
@@ -548,6 +579,11 @@ p_a <- myv_df %>%
             fontface = "bold",
             aes(x = long, y = lat, label = site, color = site),
             size = 4)+
+  geom_text(aes(x = 0407800,
+                y = 7273500),
+            label = "X",
+            size = 5,
+            color = "black")+
   scale_color_manual("",values = site_colors, guide = F)+
   scale_fill_manual("",values = c("gray95",rep("white", 18)), guide = F)+
   scalebar(myv_df, dist = 2, dist_unit = "km",st.bottom = F,
@@ -596,11 +632,11 @@ p_b <- hobo_prep %>%
         legend.text = element_text(margin = margin(l = -6)),
         legend.key.size = unit(0.7, "lines"),
         legend.spacing.y = unit(0, "lines"),
+        panel.spacing = unit(0.5, "lines"),
         panel.border = element_blank(),
         axis.line.x = element_line(size = 0.25),
         axis.line.y = element_line(size = 0.25),
-        plot.margin = margin(10,0,10,0))+
-  coord_capped_cart(left = "both", bottom='both', right='both')
+        plot.margin = margin(10,0,10,0))
 p_b
 
 
@@ -618,5 +654,4 @@ p_ab <- plot_grid(p_a, NULL,p_b,
                   vjust = c(2.5,0,-1)
 )
 p_ab
-# ggsave(file = "analysis/figures/p_sites.pdf",
-#           width = 3.5, height = 5)
+# ggsave(plot = p_ab, file = "manuscript/p_sites.pdf", width = 3.5, height = 5)
