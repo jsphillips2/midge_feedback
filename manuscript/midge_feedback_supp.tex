@@ -38,73 +38,57 @@ labelfont = bf}
 \usepackage{amsmath}
 
 
+\usepackage{lipsum}
 
-
-
-
-% ---------------------------------------------------------------------------------------
-% ---------------------------------------------------------------------------------------
-% Title page
-% ---------------------------------------------------------------------------------------
-% ---------------------------------------------------------------------------------------
-  
-\title{\textbf{Supplementary materials:} \\ 
-        Ecosystem engineering alters density-dependent feedbacks in an aquatic insect population}
-
-\author{
-  Joseph S. Phillips$^{1,2,\dagger}$ \\
-  Amanda R. McCormick$^{1,3}$ \\
-  Jamieson C. Botsch$^{1}$ \\
-  Anthony R. Ives$^{1}$}
+\makeatletter
+\renewcommand{\maketitle}{\bgroup\setlength{\parindent}{0pt}
+\begin{flushleft}
+  \@title
+\end{flushleft}\egroup
+}
+\makeatother
 
 \usepackage{amsmath} % for split math environment
+
+\title{\textbf{Supporting information:}
+          Phillips J.S., A.R. McCormick, J.C. Botsch, and A.R. Ives. 
+          2021. Ecosystem engineering alters density-dependent feedbacks 
+          in an aquatic insect population. \textit{Ecology}.}
+
 
 \date{}
 
 \begin{document}
 
-\raggedright
 \setlength\parindent{0.25in}
 
 \maketitle
 
-\noindent{} 1. Department of Integrative Biology, University of Wisconsin, Madison, Wisconsin 53706 USA
-
-\noindent{} 2. Department of Aquaculture and Fish Biology, H\'{o}lar University, Skagafj\"{o}r{\dh}ur 551 Iceland
-
-\noindent{} 3. Department of Land, Air and Water Resources, 
-University of California, Davis, CA, USA
-
-\noindent{} $\dagger$ E-mail: joseph@holar.is
 
 \linenumbers{}
 
-\clearpage
+\section*{Appendix S1}
 
-% ---------------------------------------------------------------------------------------
-% Map
-% ---------------------------------------------------------------------------------------
+\subsection*{Study sites}
 
-\section*{Study sites}
-
-Figure \ref{fig:sites}a shows the sites within M\'{y}vatn used for this study. 
+Fig. \ref{fig:sites}a shows the sites within M\'{y}vatn used for this study. 
 Sediment was collected from three sites (E2, E3, and E5) for the establishment of the mesocosms,
 while Tanytarsini larvae were all collected from E3. 
 The mesocosms were deployed at their respective sediment-source sites, 
 which is also where they were incubated for the first set of metabolism measurements
 (either day 5 or 6). 
 On day 16 they were moved to a common site for the final set of metabolism measurements,
-as marked in Figure \ref{fig:sites}a.
+as marked in Fig. \ref{fig:sites}a.
 
 Light and temperature data were collected with two loggers 
 (HOBO Pendant, Onset Computer Corporation) deployed on the lake bottom at each site
 and set to log every 30 minutes.
-Light conditions were generally similar between the three sites (Figure \ref{fig:sites}b).
+Light conditions were generally similar between the three sites (Fig. \ref{fig:sites}b).
 However, E2 was consistently colder than the other two sites.
 
 \begin{figure}
 \centering
-\includegraphics{p_sites.pdf}
+\includegraphics{fig_s1.pdf}
 \caption{\label{fig:sites}
 Experimental sites. 
 (a) The three sites (E2, E3, and E5) covered a wide range of M\'{y}vatn's south basin.
@@ -117,16 +101,16 @@ measurements from two loggers deployed on the lake bottom for each site.
 
 \clearpage
 
-\section*{Mesocosms}
+\subsection*{Mesocosms}
 
 The experimental mesocosms were constructed from acrylic tubes filled with sediment
-(Figure \ref{fig:photo1}),
+(Fig. \ref{fig:photo1}),
 as described in the main text.
 The bottom portion of each mesocosm was filled with sieved lake sediment,
 and top portion was filled with tap water in the lab.
-The mesocosms were deployed on the lake bottom (Figure \ref{fig:photo2})
+The mesocosms were deployed on the lake bottom (Fig. \ref{fig:photo2})
 with their tops open to allow exchange with the surrounding water.
-They were sealed with rubber stoppers (as shown in Figure \ref{fig:photo1})
+They were sealed with rubber stoppers (as shown in Fig. \ref{fig:photo1})
 during dissolved oxygen incubations for measuring GPP.
 
 
@@ -134,15 +118,15 @@ during dissolved oxygen incubations for measuring GPP.
 
 \begin{figure}
 \centering
-\includegraphics{mesocosms.pdf}
+\includegraphics{fig_s2.pdf}
 \caption{\label{fig:photo1}
-Construction of experimental mesocosms.
+Structure of experimental mesocosms.
 }
 \end{figure}
 
 \begin{figure}
 \centering
-\includegraphics{underwater.pdf}
+\includegraphics{fig_s3.pdf}
 \caption{\label{fig:photo2}
 Deployment of experimental mesocosms in the field.
 }
@@ -150,15 +134,16 @@ Deployment of experimental mesocosms in the field.
 
 \clearpage
 
-\section*{Statistical methods}
+\subsection*{Statistical methods}
 
 We used linear mixed models (LMMs) and generalized linear mixed models (GLMMs)
 to analyze our data, using the \texttt{lme4} package \citep{lme4} 
 in R 4.0.3 \citep{r2020}.
 These analyses are described in the main text,
-however we report the corresponding model formulas here for the sake of greater transparency.
-Data and code for recreating these analyses are available on FigShare 
-(link to be updated upon acceptance).
+however we report the corresponding model formulas here for the sake 
+of greater transparency.
+Data and code for recreating these analyses are available 
+on FigShare [link to be updated upon acceptance].
 
 We analyzed responses of GPP to larval density using a 
 polynomial LMM with the \texttt{lmer} function and the following model 
@@ -170,7 +155,7 @@ in R formula notation:
 \end{multline}
 %
 Temperature and PAR are values from during the incubation period 
-(as opposed to values during the deployment period, as shown in Figure \ref{fig:sites}b).
+(as opposed to values during the deployment period, as shown in Fig. \ref{fig:sites}b).
 ``Larvae'' refers to the initial number of Tanytarsini larvae stocked in the mesocosms,
 ``Rack'' refers to the deployment rack identity to accounting for blocking,
 and ``Mesocosm'' refers to the mesocosm identity nested within Rack 
@@ -182,7 +167,7 @@ Note that the superscript associated with the term
 $(\text{Trial} + \text{Larvae} + \text{Site})^2$,
 denotes main effects and two-way interactions among the associated terms,
 while the superscripts associated with the terms passed to the function ``I''
-(e.g., $\text{I}(\text{Larvae}^2)$
+(e.g., $\text{I}(\text{Larvae}^2))$
 denote exponentiation.
 
 We quantified the relationship between emergence and larval density
@@ -210,31 +195,26 @@ using a binomial GLMM with the \texttt{glmer} function and the following model f
 \end{equation}
 %
 GPP per larva was calculated for each mesocosm from the observed GPP standardized to the mean
-temperature using the temperature coefficient from equation \ref{eq:1}
+temperature using the temperature coefficient from Eq. \ref{eq:1}
 and averaged between the two time points.
 This value was then divided by the initial number of larvae and then z-scored.
 
-To produce the curves in main text Figure 2,
-we used the estimated coefficients from equation \ref{eq:1} to generate a range of GPPs for different 
+To produce the curves in main text Fig. 2,
+we used the estimated coefficients from Eq. \ref{eq:1} to generate a range of GPPs for different 
 sites and larval midge densities.
 This was done either including the effect of larvae (scenario i) 
 or by excluding this effect (scenario ii) as described in the main text.
 Values were generated for both sample periods, which were then averaged.
 We then divided these ``predicted'' values by the larval density to calculate 
-the GPP per larva, as for the right-hand side of equation \ref{eq:3},
-which we then used as the input to the model fit by equation \ref{eq:3} to generate
+the GPP per larva, as for the right-hand side of Eq. \ref{eq:3},
+which we then used as the input to the model fit by Eq. \ref{eq:3} to generate
 predicted proportions of midges emerged as a function of GPP per midge
 under the two scenarios.
-These projections were shown in main text Figure 2 both as proportions (panel a)
+These projections were shown in main text Fig. 2 both as proportions (panel a)
 and as the total number of midges that would emerge under that scenario 
 (panel b; calculated by multiplying the proportion by the initial number of larvae).
 
-% ---------------------------------------------------------------------------------------
-% ---------------------------------------------------------------------------------------
-% Literature Cited
-% ---------------------------------------------------------------------------------------
-% ---------------------------------------------------------------------------------------
-
+\clearpage
 
 \bibliographystyle{ecology.bst}
 
